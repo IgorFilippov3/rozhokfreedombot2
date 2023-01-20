@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Start, Update, On, Command } from 'nestjs-telegraf';
+import { Start, Update, On, Command, Hears } from 'nestjs-telegraf';
 import { text } from 'stream/consumers';
 import { Context } from 'telegraf';
 import { isPetuh } from './utils/is-petuh';
 import { isQuestion } from './utils/is-question';
 import { UserEntity } from './_core/entities/user.entity';
+import { UserRole } from './_core/models/user-role.enum';
 import { MemeService } from './_core/services/meme.service';
 import { OpenaiService } from './_core/services/openai.service';
 import { UsersService } from './_core/services/users.service';
@@ -24,12 +25,6 @@ export class AppService {
     await ctx.reply('Всім привіт Люсьєн знову на зв\'язку.');
   }
 
-  // @Command('add')
-  // async addToDatabase(ctx: Context, x: any) {
-  //   console.dir({ x: await x() });
-  //   await ctx.reply('Тест');
-  // }
-
   @Command('meme')
   async getMeme(ctx: Context) {
     const meme: string | null = await this.memeService.getMeme();
@@ -37,6 +32,22 @@ export class AppService {
     meme === null
       ? await ctx.reply('Сервер с мемами из даун')
       : await ctx.replyWithPhoto({ url: meme });
+  }
+
+  @Command('petuhi')
+  async isPetuhuInChat(ctx: Context) {
+    const petuhi: UserEntity[] = await this.usersService.findUsersByRole(UserRole.PETUH);
+
+    if (petuhi.length === 0) {
+      await ctx.reply('петухи не обнаружены, продолжаю наблюдение');
+      return;
+    }
+
+    const petuhiMessage = petuhi.map(p => p.username).join('\n');
+    
+    petuhi.length === 0
+      ? await ctx.reply('петухи не обнаружены, продолжаю наблюдение')
+      : await ctx.replyWithHTML(`<b>в чате есть петухи!!</b> \n\n${petuhiMessage}`);
   }
 
   @On('text')
@@ -111,7 +122,7 @@ export class AppService {
       }
 
       await ctx.reply('Добро пожаловать в лучший из Рожок чатов.');
-      
+
     } catch (e) {
       console.error(e);
     }

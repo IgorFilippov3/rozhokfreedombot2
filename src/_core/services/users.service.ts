@@ -15,6 +15,13 @@ export class UsersService {
     private usersRepository: Repository<UserEntity>,
   ) { }
 
+  async findUsersByRole(role: UserRole): Promise<UserEntity[]> {
+    const users = await this.usersRepository.createQueryBuilder('users')
+      .where("users.role = :role", { role })
+      .getMany();
+    return users;  
+  }
+
   async removeUser(userId: number): Promise<void> {
     const user = await this.findUserByUserId(userId);
 
