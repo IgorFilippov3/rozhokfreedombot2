@@ -38,9 +38,9 @@ export class UsersService {
   async createUser({ userId, firstName, lastName, username }: CreateUserDto): Promise<UserEntity> {
     const user = new UserEntity();
     user.userId = userId.toString();
-    user.firstName = firstName;
-    user.lastName = lastName;
-    user.username = username;
+    user.firstName = firstName ?? '';
+    user.lastName = lastName ?? '';
+    user.username = username ?? '';
     user.role = UserRole.defineRole(username);
 
     try {

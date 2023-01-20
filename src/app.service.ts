@@ -42,7 +42,7 @@ export class AppService {
   @On('text')
   async addToDatabase(ctx: Context) {
     const chatMember = ctx.message.from;
-
+    
     const userInDatabase: UserEntity | null = await this.usersService.findUserByUserId(chatMember.id);
 
     if (userInDatabase === null) {
