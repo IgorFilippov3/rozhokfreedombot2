@@ -29,9 +29,9 @@ import { UsersService } from './_core/services/users.service';
         type: "postgres",
         entities: ["dist/**/*.entity{.ts,.js}"],
         synchronize: true,
-        ssl: {
-          rejectUnauthorized: false
-        }
+        // ssl: {
+        //   rejectUnauthorized: false
+        // }
       }),
     }),
     TypeOrmModule.forFeature([

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Start, Update, On, Command } from 'nestjs-telegraf';
+import { text } from 'stream/consumers';
 import { Context } from 'telegraf';
 import { isPetuh } from './utils/is-petuh';
 import { isQuestion } from './utils/is-question';
@@ -23,37 +24,50 @@ export class AppService {
     await ctx.reply('Всім привіт Люсьєн знову на зв\'язку.');
   }
 
+  // @Command('add')
+  // async addToDatabase(ctx: Context, x: any) {
+  //   console.dir({ x: await x() });
+  //   await ctx.reply('Тест');
+  // }
+
   @Command('meme')
   async getMeme(ctx: Context) {
     const meme: string | null = await this.memeService.getMeme();
-    
-    meme === null 
-      ? await ctx.reply('Сервер с мемами из даун') 
+
+    meme === null
+      ? await ctx.reply('Сервер с мемами из даун')
       : await ctx.replyWithPhoto({ url: meme });
   }
 
   @On('text')
   async reply(ctx: Context) {
+    //@ts-ignore
+    const text: string = ctx.message.text.toLowerCase();
+
+    if (!text.startsWith('люсьен')) {
+      return;
+    }
+
     try {
       const username: string = ctx.message.from.username;
 
       if (isPetuh(username)) {
-        return await ctx.reply('Петухам не отвечаю');
-      }
-
-      //@ts-ignore
-      const text: string = ctx.message.text.toLowerCase();
-
-      if (text === 'тобі повістка') {
-        return await ctx.replyWithPhoto({ url: 'https://i.ibb.co/C8MNhFY/sticker.webp' });
+        await ctx.reply('Петухам не отвечаю', {
+          reply_to_message_id: ctx.message.message_id
+        });
+        return;
       }
 
       if (isQuestion(text)) {
         const answer = await this.openaiService.answerQuestion(text);
-        await ctx.reply(answer);
+        await ctx.reply(answer, {
+          reply_to_message_id: ctx.message.message_id
+        });
       } else {
         const answer = await this.openaiService.reply(text);
-        await ctx.reply(answer);
+        await ctx.reply(answer, {
+          reply_to_message_id: ctx.message.message_id
+        });
       }
 
     } catch (e) {
@@ -65,7 +79,7 @@ export class AppService {
   @On('new_chat_members')
   async handleJoinChat(ctx: Context) {
     try {
-       //@ts-ignore
+      //@ts-ignore
       const newMember = ctx.message.new_chat_members[0];
 
       const user: UserEntity = await this.usersService.createUser({
