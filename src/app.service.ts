@@ -57,35 +57,34 @@ export class AppService {
     //@ts-ignore
     const text: string = ctx.message.text.toLowerCase();
 
-    if (!text.startsWith('люсьен')) {
-      return;
-    }
-
-    try {
-      const username: string = ctx.message.from.username;
-
-      if (isPetuh(username)) {
-        await ctx.reply('Петухам не отвечаю', {
-          reply_to_message_id: ctx.message.message_id
-        });
-        return;
+    //@ts-ignore
+    if (text.startsWith('люсьен') || ctx.message.reply_to_message?.from.username === ctx.me) {
+      try {
+        const username: string = ctx.message.from.username;
+  
+        if (isPetuh(username)) {
+          await ctx.reply('Петухам не отвечаю', {
+            reply_to_message_id: ctx.message.message_id
+          });
+          return;
+        }
+  
+        if (isQuestion(text)) {
+          const answer = await this.openaiService.answerQuestion(text);
+          await ctx.reply(answer, {
+            reply_to_message_id: ctx.message.message_id
+          });
+        } else {
+          const answer = await this.openaiService.reply(text);
+          await ctx.reply(answer, {
+            reply_to_message_id: ctx.message.message_id
+          });
+        }
+  
+      } catch (e) {
+        console.error(e);
+        await ctx.reply('Чето пошло не так, попробуй еще раз...');
       }
-
-      if (isQuestion(text)) {
-        const answer = await this.openaiService.answerQuestion(text);
-        await ctx.reply(answer, {
-          reply_to_message_id: ctx.message.message_id
-        });
-      } else {
-        const answer = await this.openaiService.reply(text);
-        await ctx.reply(answer, {
-          reply_to_message_id: ctx.message.message_id
-        });
-      }
-
-    } catch (e) {
-      console.error(e);
-      await ctx.reply('Чето пошло не так, попробуй еще раз...');
     }
   }
 
