@@ -42,7 +42,7 @@ export class AppService {
   @On('text')
   async reply(ctx: Context) {
     const chatMember = ctx.message.from;
-    
+
     const userInDatabase: UserEntity | null = await this.usersService.findUserByUserId(chatMember.id);
 
     if (userInDatabase === null) {
@@ -61,14 +61,14 @@ export class AppService {
     if (text.startsWith('люсьен') || ctx.message.reply_to_message?.from.username === ctx.me) {
       try {
         const username: string = ctx.message.from.username;
-  
+
         if (isPetuh(username)) {
           await ctx.reply('Петухам не отвечаю', {
             reply_to_message_id: ctx.message.message_id
           });
           return;
         }
-  
+
         if (isQuestion(text)) {
           const answer = await this.openaiService.answerQuestion(text);
           await ctx.reply(answer, {
@@ -80,7 +80,7 @@ export class AppService {
             reply_to_message_id: ctx.message.message_id
           });
         }
-  
+
       } catch (e) {
         console.error(e);
         await ctx.reply('Чето пошло не так, попробуй еще раз...');
@@ -94,17 +94,24 @@ export class AppService {
       //@ts-ignore
       const newMember = ctx.message.new_chat_members[0];
 
-      const user: UserEntity = await this.usersService.createUser({
-        userId: newMember.id,
-        firstName: newMember.first_name,
-        lastName: newMember.last_name,
-        username: newMember.username
-      });
+      const existingUser: UserEntity | null = await this.usersService.findUserByUserId(newMember.id);
 
-      isPetuh(user.username)
-        ? await ctx.reply('В чате завелся петух.')
-        : await ctx.reply('Добро пожаловать в лучший из Рожок чатов.');
+      if (existingUser === null) {
+        const user: UserEntity = await this.usersService.createUser({
+          userId: newMember.id,
+          firstName: newMember.first_name,
+          lastName: newMember.last_name,
+          username: newMember.username
+        });
 
+        isPetuh(user.username)
+          ? await ctx.reply('В чате завелся петух.')
+          : await ctx.reply('Добро пожаловать в лучший из Рожок чатов.');
+        return;
+      }
+
+      await ctx.reply('Добро пожаловать в лучший из Рожок чатов.');
+      
     } catch (e) {
       console.error(e);
     }
