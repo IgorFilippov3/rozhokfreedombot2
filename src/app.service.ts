@@ -40,7 +40,24 @@ export class AppService {
   }
 
   @On('text')
+  async addToDatabase(ctx: Context) {
+    const chatMember = ctx.message.from;
+
+    const userInDatabase: UserEntity | null = await this.usersService.findUserByUserId(chatMember.id);
+
+    if (userInDatabase === null) {
+      await this.usersService.createUser({
+        userId: chatMember.id,
+        firstName: chatMember.first_name,
+        lastName: chatMember.last_name,
+        username: chatMember.username
+      });
+    }
+  }
+
+  @On('text')
   async reply(ctx: Context) {
+    console.log(ctx.message, 'message');
     //@ts-ignore
     const text: string = ctx.message.text.toLowerCase();
 

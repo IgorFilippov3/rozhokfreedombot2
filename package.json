@@ -9,7 +9,7 @@
     "prebuild": "rimraf dist",
     "build": "nest build",
     "start": "node ./dist/main.js",
-    "start:dev": "nest start --watch"
+    "start:dev": "MODE=DEV nest start --watch"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",
