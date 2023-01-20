@@ -40,7 +40,7 @@ export class AppService {
   }
 
   @On('text')
-  async addToDatabase(ctx: Context) {
+  async reply(ctx: Context) {
     const chatMember = ctx.message.from;
     
     const userInDatabase: UserEntity | null = await this.usersService.findUserByUserId(chatMember.id);
@@ -53,11 +53,7 @@ export class AppService {
         username: chatMember.username
       });
     }
-  }
 
-  @On('text')
-  async reply(ctx: Context) {
-    console.log(ctx.message, 'message');
     //@ts-ignore
     const text: string = ctx.message.text.toLowerCase();
 
