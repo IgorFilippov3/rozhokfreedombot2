@@ -3,8 +3,10 @@ import { Start, Update, On, Command } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 import { isPetuh } from './utils/is-petuh';
 import { isQuestion } from './utils/is-question';
+import { UserEntity } from './_core/entities/user.entity';
 import { MemeService } from './_core/services/meme.service';
 import { OpenaiService } from './_core/services/openai.service';
+import { UsersService } from './_core/services/users.service';
 
 @Update()
 @Injectable()
@@ -13,6 +15,7 @@ export class AppService {
   constructor(
     private openaiService: OpenaiService,
     private memeService: MemeService,
+    private usersService: UsersService,
   ) { }
 
   @Start()
@@ -22,8 +25,11 @@ export class AppService {
 
   @Command('meme')
   async getMeme(ctx: Context) {
-    const meme: string = await this.memeService.getMeme();
-    await ctx.replyWithPhoto({ url: meme });
+    const meme: string | null = await this.memeService.getMeme();
+    
+    meme === null 
+      ? await ctx.reply('Сервер с мемами из даун') 
+      : await ctx.replyWithPhoto({ url: meme });
   }
 
   @On('text')
@@ -57,21 +63,41 @@ export class AppService {
   }
 
   @On('new_chat_members')
-  async handleNewChatMembers(ctx: Context) {
+  async handleJoinChat(ctx: Context) {
     try {
-      //@ts-ignore
-      const newUsers = ctx.message.new_chat_members;
-  
-      const petuhInChat = newUsers.some(nu => isPetuh(nu.username));
-  
-      if (petuhInChat) {
-        return await ctx.reply('В чате завелся петух.');
-      } else {
-        return await ctx.reply('Добро пожаловать в лучший из Рожок чатов.');
-      }
-  
+       //@ts-ignore
+      const newMember = ctx.message.new_chat_members[0];
+
+      const user: UserEntity = await this.usersService.createUser({
+        userId: newMember.id,
+        firstName: newMember.first_name,
+        lastName: newMember.last_name,
+        username: newMember.username
+      });
+
+      isPetuh(user.username)
+        ? await ctx.reply('В чате завелся петух.')
+        : await ctx.reply('Добро пожаловать в лучший из Рожок чатов.');
+
     } catch (e) {
       console.error(e);
     }
+  }
+
+  @On('left_chat_member')
+  async handleLeaveChat(ctx: Context) {
+    //@ts-ignore
+    const member = ctx.message.left_chat_member;
+
+    const user: UserEntity | null = await this.usersService.findUserByUserId(member.id);
+
+    if (user !== null) {
+      await this.usersService.removeUser(Number(user.userId));
+      isPetuh(user.role)
+        ? await ctx.reply('Чат покинул петух')
+        : await ctx.reply('кто-то ливнул');
+    }
+
+    await ctx.reply('кто-то ливнул');
   }
 }
